@@ -274,10 +274,7 @@ upstream $OE_USER {
 upstream ${OE_USER}chat {
   server 127.0.0.1:$LONGPOLLING_PORT;
 }
-map $http_upgrade $connection_upgrade {
-  default upgrade;
-  ''      close;
-}
+
 
 # http -> https
 server {
