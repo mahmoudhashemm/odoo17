@@ -73,6 +73,7 @@ sudo pip3 uninstall pyOpenSSL -y
 sudo pip3 uninstall cryptography -y
 sudo pip3 uninstall cffi -y
 sudo apt-get install --reinstall libssl-dev -y
+sudo apt-get install python3-cryptography -y
 sudo pip3 install cryptography
 sudo pip3 install pyOpenSSL
 sudo pip3 install cffi
