@@ -1,14 +1,12 @@
 #!/bin/bash
 
 ################################################################################
-# Script for installing Odoo on Ubuntu 22.04 LTS (could be used for other version too)
-# Author: Henry Robert Muwanika
+# Script for installing Odoo on Ubuntu 22.04 LTS (could be used for other versions too)
+# Author: Henry Robert Muwanika, Yenthe Van Ginneken
 #-------------------------------------------------------------------------------
-# This script will install Odoo on your Ubuntu 22.04 server. It can install multiple Odoo instances
+# This script will install Odoo on your Ubuntu server. It can install multiple Odoo instances
 # in one Ubuntu because of the different xmlrpc_ports
 #-------------------------------------------------------------------------------
-# crontab -e
-# 43 6 * * * certbot renew --post-hook "systemctl reload nginx"
 # Make a new file:
 # sudo nano install_odoo_ubuntu.sh
 # Place this content in it and then make the file executable:
@@ -50,6 +48,7 @@ sudo timedatectl set-timezone Africa/Cairo
 timedatectl
 
 # Install PostgreSQL Server
+echo -e "\n---- Install PostgreSQL Server ----"
 sudo apt install -y curl ca-certificates gnupg
 sudo install -d /usr/share/postgresql-common/pgdg
 sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
@@ -73,7 +72,7 @@ echo -e "\n=================== Installing Python pip Dependencies ==============
 sudo apt install -y libpq-dev libxml2-dev libxslt1-dev libffi-dev
 
 echo -e "\n================== Updating werkzeug and dependencies ============================"
-sudo pip3 install --upgrade werkzeug
+sudo pip3 install werkzeug==2.0.3
 sudo pip3 install --upgrade pyOpenSSL
 sudo pip3 install --upgrade setuptools pip
 
@@ -287,4 +286,4 @@ echo "Restart Odoo service: sudo systemctl restart $OE_USER"
 if [ $INSTALL_NGINX = "True" ]; then
   echo "Nginx configuration file: /etc/nginx/conf.d/$OE_USER.conf"
 fi
-echo -e "\n========================================================================="
+echo "\n========================================================================="
