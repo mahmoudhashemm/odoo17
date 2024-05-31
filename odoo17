@@ -175,6 +175,9 @@ if [ $IS_ENTERPRISE = "True" ]; then
     echo -e "\n============= Installing Enterprise specific libraries ============"
     sudo -H pip3 install num2words ofxparse dbfread ebaysdk firebase_admin pyOpenSSL
     pip install --upgrade cryptography pyOpenSSL
+    pip install --upgrade cryptography
+    python -c "import cryptography; print(cryptography.__version__)"
+    systemctl restart odoo
     sudo npm install -g less-plugin-clean-css
 fi
 
