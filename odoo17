@@ -274,7 +274,7 @@ upstream ${OE_USER}chat {
   server 127.0.0.1:$LONGPOLLING_PORT;
 }
 
-map /$http_upgrade /$connection_upgrade {
+map \$http_upgrade \$connection_upgrade {
   default upgrade;
   ''      close;
 }
@@ -324,12 +324,11 @@ server {
   gzip_types text/css text/scss text/plain text/xml application/xml application/json application/javascript;
   gzip on;
 }
- 
+
 EOF
 
-  
 
-  
+
   sudo systemctl reload nginx
   sudo su root -c "printf 'proxy_mode = True\n' >> /etc/${OE_CONFIG}.conf"
   echo "Done! The Nginx server is up and running. Configuration can be found at /etc/nginx/sites-available/$OE_USER"
