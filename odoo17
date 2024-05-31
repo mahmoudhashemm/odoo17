@@ -266,7 +266,6 @@ sudo apt install nginx
   
   
 cat <<EOF > /etc/nginx/conf.d/$OE_USER.conf
-
 #odoo server
 upstream $OE_USER {
   server 127.0.0.1:$OE_PORT;
@@ -296,12 +295,12 @@ server {
   # Redirect WebSocket requests to Odoo's gevent port
   location /websocket {
     proxy_pass http://${OE_USER}chat;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection $connection_upgrade;
-    proxy_set_header X-Forwarded-Host $http_host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection \$connection_upgrade;
+    proxy_set_header X-Forwarded-Host \$http_host;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header X-Real-IP \$remote_addr;
 
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
     proxy_cookie_flags session_id samesite=lax;  # requires nginx 1.19.8+
@@ -310,10 +309,10 @@ server {
   # Redirect requests to the backend Odoo server
   location / {
     # Add headers to enable proxy mode in Odoo
-    proxy_set_header X-Forwarded-Host $http_host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Host \$http_host;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header X-Real-IP \$remote_addr;
     proxy_redirect off;
     proxy_pass http://$OE_USER;
 
