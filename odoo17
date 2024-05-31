@@ -265,7 +265,7 @@ sudo apt install nginx
   sudo systemctl enable nginx
   
   
-cat <<EOF > /etc/nginx/conf.d/$OE_USER
+cat <<EOF > /etc/nginx/conf.d/$OE_USER.conf
 
 #odoo server
 upstream $OE_USER {
