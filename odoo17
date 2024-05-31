@@ -21,15 +21,15 @@ OE_HOME_EXT="/opt/$OE_USER/${OE_USER}-server"
 INSTALL_WKHTMLTOPDF="True"
 OE_PORT="8069"
 OE_VERSION="17.0"
-IS_ENTERPRISE="True"
+IS_ENTERPRISE="False"
 INSTALL_NGINX="True"
 OE_SUPERADMIN="admin"
 GENERATE_RANDOM_PASSWORD="True"
 OE_CONFIG="${OE_USER}-server"
-WEBSITE_NAME="16.alredaa.co"
+WEBSITE_NAME="example.com"
 LONGPOLLING_PORT="8072"
 ENABLE_SSL="True"
-ADMIN_EMAIL="mahmoud.metto@gmail.com"
+ADMIN_EMAIL="odoo@example.com"
 
 # Disable password authentication
 sudo sed -i 's/#ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
@@ -68,12 +68,21 @@ echo -e "\n=================== Fixing pycparser conflict =======================
 sudo apt remove -y python3-pycparser
 sudo pip3 install --upgrade pycparser
 
+echo -e "\n=================== Removing and Reinstalling pyOpenSSL and dependencies ============================"
+sudo pip3 uninstall pyOpenSSL -y
+sudo pip3 uninstall cryptography -y
+sudo pip3 uninstall cffi -y
+sudo apt-get install --reinstall libssl-dev -y
+sudo pip3 install cryptography
+sudo pip3 install pyOpenSSL
+sudo pip3 install cffi
+
 echo -e "\n=================== Installing Python pip Dependencies ============================"
 sudo apt install -y libpq-dev libxml2-dev libxslt1-dev libffi-dev
 
 echo -e "\n================== Updating werkzeug and dependencies ============================"
+sudo pip3 uninstall werkzeug -y
 sudo pip3 install werkzeug==2.0.3
-sudo pip3 install --upgrade pyOpenSSL
 sudo pip3 install --upgrade setuptools pip
 
 echo -e "\n================== Install Wkhtmltopdf ============================================="
@@ -180,9 +189,20 @@ sudo systemctl restart $OE_USER.service
 
 # Install Nginx if needed
 if [ $INSTALL_NGINX = "True" ]; then
+  echo -e "\n======== Installing nginx ============="
   echo -e "\n---- Installing and setting up Nginx ----"
+  sudo apt install -y curl gnupg2 ca-certificates lsb-release ubuntu-keyring
+  curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+      | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+  gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
+  echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu `lsb_release -cs` nginx" \
+      | sudo tee /etc/apt/sources.list.d/nginx.list
+  echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+      | sudo tee /etc/apt/preferences.d/99nginx
+  sudo apt update
   sudo apt install -y nginx
   sudo systemctl enable nginx
+
   cat <<EOF > /etc/nginx/conf.d/$OE_USER.conf
 # odoo server
 upstream $OE_USER {
