@@ -72,6 +72,11 @@ sudo pip3 install --upgrade pycparser
 echo -e "\n=================== Installing Python pip Dependencies ============================"
 sudo apt install -y libpq-dev libxml2-dev libxslt1-dev libffi-dev
 
+echo -e "\n================== Updating werkzeug and dependencies ============================"
+sudo pip3 install --upgrade werkzeug
+sudo pip3 install --upgrade pyOpenSSL
+sudo pip3 install --upgrade setuptools pip
+
 echo -e "\n================== Install Wkhtmltopdf ============================================="
 sudo apt install -y xfonts-75dpi xfonts-encodings xfonts-utils xfonts-base fontconfig
 
