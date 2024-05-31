@@ -81,13 +81,15 @@ sudo pip3 install setuptools wheel
 
 # Install nodeJS NPM and rtlcss for LTR support
 echo -e "\n=========== Installing nodeJS NPM and rtlcss for LTR support =================="
-if ! command -v node &> /dev/null; then
-  sudo curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-  sudo apt install -y nodejs npm
-  sudo npm install -g --upgrade npm
-  sudo ln -s /usr/bin/nodejs /usr/bin/node
-  sudo npm install -g less less-plugin-clean-css rtlcss node-gyp
-fi
+# Remove existing Node.js and npm if any
+sudo apt remove -y nodejs npm
+
+# Install Node.js and npm
+sudo curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs npm
+sudo npm install -g --upgrade npm
+sudo ln -s /usr/bin/nodejs /usr/bin/node
+sudo npm install -g less less-plugin-clean-css rtlcss node-gyp
 
 # Install Wkhtmltopdf if needed
 if [ $INSTALL_WKHTMLTOPDF = "True" ]; then
