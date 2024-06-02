@@ -35,6 +35,12 @@ select_odoo_version
 # Fixed parameters
 OE_USER="odoo"
 
+WEBSITE_NAME="16.alredaa.co"
+OE_PORT="8069"
+LONGPOLLING_PORT="8071"
+
+
+
 # Add group
 groupadd "$OE_USER"
 # Add user
@@ -60,20 +66,17 @@ sudo apt-get upgrade -y
 apt install -y zip gdebi net-tools
 echo "----------------------------localization-------------------------------"
 
-export LC_ALL="en_US.UTF-8"
-export LC_CTYPE="en_US.UTF-8"
-sudo dpkg-reconfigure locales
+#export LC_ALL="en_US.UTF-8"
+#export LC_CTYPE="en_US.UTF-8"
+#sudo dpkg-reconfigure locales
 
 # Install PostgreSQL Server
-sudo sh -c 'echo "deb [arch=amd64] http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-curl -o setup-repos.sh https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-sh setup-repos.sh
-
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt-get update
-
-echo -e "\n---- Install PostgreSQL Server ----"
-sudo apt-get install postgresql-15 postgresql-server-dev-15 -y
+sudo apt install curl ca-certificates
+sudo install -d /usr/share/postgresql-common/pgdg
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+sudo apt update
+sudo apt -y install postgresql
 
 echo -e "\n---- Creating the ODOO PostgreSQL User  ----"
 sudo su - postgres -c "createuser -s $OE_USER" 2> /dev/null || true
@@ -131,7 +134,7 @@ sudo easy_install greenlet
 sudo easy_install gevent
 sudo apt-get install -y python3-pip python3-wheel python3-setuptools
 sudo -H pip3 install --upgrade pip
-sudo apt install -y python3-asn1crypto 
+sudo apt install -y python3-asn1crypto
 sudo apt install -y python3-babel python3-bs4 python3-cffi-backend python3-cryptography python3-dateutil python3-docutils python3-feedparser python3-funcsigs python3-gevent python3-greenlet python3-html2text python3-html5lib python3-jinja2 python3-lxml python3-mako python3-markupsafe python3-mock python3-ofxparse python3-openssl python3-passlib python3-pbr python3-pil python3-psutil python3-psycopg2 python3-pydot python3-pygments python3-pyparsing python3-pypdf2 python3-renderpm python3-reportlab python3-reportlab-accel python3-roman python3-serial python3-stdnum python3-suds python3-tz python3-usb python3-werkzeug python3-xlsxwriter python3-yaml
 pip3 install -r https://raw.githubusercontent.com/odoo/odoo/"$OE_BRANCH"/requirements.txt --user
 pip3 install phonenumbers --user
@@ -145,25 +148,132 @@ chown odoo:odoo /var/log/odoo/odoo-server.log
 chown odoo:odoo /etc/odoo/odoo.conf
 cd /odoo
 
-sudo git clone --depth 1 --branch "$OE_BRANCH" https://www.github.com/odoo/odoo 
+sudo git clone --depth 1 --branch "$OE_BRANCH" https://www.github.com/odoo/odoo
 cd /
 
 chown -R odoo:odoo /odoo
 
 cd /root
-wget https://raw.githubusercontent.com/mah007/OdooScript/14.0/odoo.service
+wget https://raw.githubusercontent.com/mahmoudhashemm/odoo17/main/odoo.service
 cp odoo.service /etc/systemd/system
 sudo systemctl daemon-reload
 sudo systemctl enable odoo
 sudo systemctl start odoo
-wget https://raw.githubusercontent.com/mah007/OdooScript/14.0/nginx.sh
-bash nginx.sh
+echo "nginx:"
+sudo apt install curl gnupg2 ca-certificates lsb-release ubuntu-keyring
+curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+    | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+http://nginx.org/packages/ubuntu `lsb_release -cs` nginx" \
+    | sudo tee /etc/apt/sources.list.d/nginx.list
+echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+    | sudo tee /etc/apt/preferences.d/99nginx
+sudo apt update
+sudo apt install nginx
+sudo systemctl enable nginx
+  cat <<EOF > /etc/nginx/conf.d/$OE_USER.conf
+ odoo server
+upstream $OE_USER {
+  server 127.0.0.1:\$OE_PORT;
+}
+upstream ${OE_USER}chat {
+  server 127.0.0.1:\$LONGPOLLING_PORT;
+}
+
+map \$http_upgrade \$connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+# http -> https
+server {
+
+
+
+  listen 80;
+  server_name \$WEBSITE_NAME;
+  rewrite ^(.*) https://$host$1 permanent;
+
+
+}
+
+server {
+  listen 443 ssl;
+  server_name \$WEBSITE_NAME;
+  proxy_read_timeout 720s;
+  proxy_connect_timeout 720s;
+  proxy_send_timeout 720s;
+
+  # SSL parameter
+  ssl_certificate /etc/letsencrypt/live/16.alredaa.co/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/16.alredaa.co/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf;
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+  # log
+  access_log /var/log/nginx/odoo.access.log;
+  error_log /var/log/nginx/odoo.error.log;
+
+  # Redirect websocket requests to odoo gevent port
+ location /websocket {
+    proxy_pass http://${OE_USER}chat;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection \$connection_upgrade;
+    proxy_set_header X-Forwarded-Host \$http_host;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header X-Real-IP \$remote_addr;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+    proxy_cookie_flags session_id samesite=lax secure;  # requires nginx 1.19.8
+  }
+
+  # Redirect requests to odoo backend server
+location / {
+    proxy_set_header X-Forwarded-Host \$http_host;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_redirect off;
+    proxy_pass http://$OE_USER;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+    proxy_cookie_flags session_id samesite=lax secure;  # requires nginx 1.19.8
+  }
+
+  # common gzip
+  gzip_types text/css text/scss text/plain text/xml application/xml application/json application/javascript;
+  gzip on;
+
+}
+EOF
+
+sudo systemctl reload nginx
+
+
+
+
 apt-get install -y perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python
-wget https://download.webmin.com/jcameron-key.asc
-apt-key add jcameron-key.asc
+
 apt-get install apt-transport-https -y
 apt-get update
-apt-get install -y webmin --install-recommends 
+#!/bin/bash
+
+#!/bin/bash
+
+# تشغيل الأوامر كمستخدم odoo
+su - odoo -c "
+    # تثبيت مكتبة decorator
+    pip3 install --user decorator
+
+    # الانتقال إلى دليل odoo
+    cd /odoo/odoo
+
+    # تثبيت المتطلبات
+    pip3 install --user -r requirements.txt
+"
+
 
 echo "-----------------------------------------------------------"
 echo "Done! The Odoo production platform is ready:"
