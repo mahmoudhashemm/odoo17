@@ -48,7 +48,7 @@ server {
   gzip on;
 }
 
-# and install inginx and reinstall it
+haysh # and install inginx and reinstall it
 
 
 
