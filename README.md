@@ -71,6 +71,10 @@ chown odoo:odoo /etc/odoo/odoo2.conf
 sudo pkill nginx
 
 
+sudo ufw status
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw reload
 
 
 
