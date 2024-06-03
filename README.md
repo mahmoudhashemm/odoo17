@@ -67,3 +67,10 @@ chown odoo:odoo /etc/odoo/odoo2.conf
 
 
 
+
+sudo pkill nginx
+
+
+
+
+
