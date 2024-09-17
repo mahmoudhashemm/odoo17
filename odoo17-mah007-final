@@ -172,13 +172,13 @@ echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 
 sudo apt update
 sudo apt install nginx
 sudo systemctl enable nginx
-  cat <<EOF > /etc/nginx/conf.d/$OE_USER.conf
- odoo server
-upstream $OE_USER {
-  server 127.0.0.1:\$OE_PORT;
+  cat <<EOF > /etc/nginx/conf.d/${OE_USER}.conf
+# odoo server
+upstream ${OE_USER} {
+  server 127.0.0.1:${OE_PORT};
 }
 upstream ${OE_USER}chat {
-  server 127.0.0.1:\$LONGPOLLING_PORT;
+  server 127.0.0.1:${LONGPOLLING_PORT};
 }
 
 map \$http_upgrade \$connection_upgrade {
@@ -188,26 +188,21 @@ map \$http_upgrade \$connection_upgrade {
 
 # http -> https
 server {
-
-
-
   listen 80;
-  server_name \$WEBSITE_NAME;
-  rewrite ^(.*) https://$host$1 permanent;
-
-
+  server_name ${WEBSITE_NAME};
+  rewrite ^(.*) https://\$host\$1 permanent;
 }
 
 server {
   listen 443 ssl;
-  server_name \$WEBSITE_NAME;
+  server_name ${WEBSITE_NAME};
   proxy_read_timeout 720s;
   proxy_connect_timeout 720s;
   proxy_send_timeout 720s;
 
-  # SSL parameter
-  ssl_certificate /etc/letsencrypt/live/16.alredaa.co/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/16.alredaa.co/privkey.pem; # managed by Certbot
+  # SSL parameters
+  ssl_certificate /etc/letsencrypt/live/${WEBSITE_NAME}/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/${WEBSITE_NAME}/privkey.pem; # managed by Certbot
   include /etc/letsencrypt/options-ssl-nginx.conf;
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -216,7 +211,7 @@ server {
   error_log /var/log/nginx/odoo.error.log;
 
   # Redirect websocket requests to odoo gevent port
- location /websocket {
+  location /websocket {
     proxy_pass http://${OE_USER}chat;
     proxy_set_header Upgrade \$http_upgrade;
     proxy_set_header Connection \$connection_upgrade;
@@ -230,13 +225,13 @@ server {
   }
 
   # Redirect requests to odoo backend server
-location / {
+  location / {
     proxy_set_header X-Forwarded-Host \$http_host;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto \$scheme;
     proxy_set_header X-Real-IP \$remote_addr;
     proxy_redirect off;
-    proxy_pass http://$OE_USER;
+    proxy_pass http://${OE_USER};
 
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
     proxy_cookie_flags session_id samesite=lax secure;  # requires nginx 1.19.8
@@ -245,10 +240,8 @@ location / {
   # common gzip
   gzip_types text/css text/scss text/plain text/xml application/xml application/json application/javascript;
   gzip on;
-
 }
 EOF
-
 sudo systemctl reload nginx
 
 
