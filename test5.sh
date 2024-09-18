@@ -274,7 +274,7 @@ su - "$OE_USER" -c "
     pip3 install --user decorator
 
     # الانتقال إلى دليل odoo
-    cd /"$OE_USER"/"$OE_USER"
+    cd /"$OE_USER"/odoo
 
     # تثبيت المتطلبات
     pip3 install --user -r requirements.txt
