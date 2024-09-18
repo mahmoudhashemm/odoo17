@@ -166,7 +166,7 @@ After=network.target
 Type=simple
 User=$OE_USER
 Group=$OE_USER
-ExecStart=/etc/$OE_USER/$OE_USER/odoo-bin --config /etc/$OE_USER/${OE_USER}.conf --logfile /var/log/${OE_USER}/${OE_USER}.log
+ExecStart=/$OE_USER/$OE_USER/odoo-bin --config /etc/$OE_USER/${OE_USER}.conf --logfile /var/log/${OE_USER}/${OE_USER}.log
 KillMode=mixed
 
 [Install]
