@@ -78,7 +78,13 @@ sudo ufw reload
 
 
 
+
+
+
 ssh-keygen -t ed25519 -C "your_email@example.com"
+
+
+
 
 Copy this script and run it on your terminal
 ./odoo-bin -w a -s -c ../odoo.conf --stop-after-init
